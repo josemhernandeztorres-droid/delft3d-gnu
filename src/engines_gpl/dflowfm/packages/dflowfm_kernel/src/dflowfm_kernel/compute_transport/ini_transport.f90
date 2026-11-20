@@ -255,12 +255,12 @@ contains
 !  local timestepping
       time_dtmax = -1.0_dp ! cfl-numbers not evaluated
       nsubsteps = 1
-      ndeltasteps = 1
-      jaupdatehorflux = 1
+      if (allocated(ndeltasteps)) ndeltasteps = 1
+      if (allocated(jaupdatehorflux)) jaupdatehorflux = 1
       numnonglobal = 0
 
 !  sediment advection velocity
-      jaupdateconst = 1
+      if (allocated(jaupdateconst)) jaupdateconst = 1
 
       if (stm_included) then
          if (stmpar%lsedsus > 0) then
