@@ -160,8 +160,8 @@ contains
       nf_numsour = 0
       nf_numsink = 0
       num_source_sink_for_nearfield = 0
-      nf_entr_start = 0
-      nf_entr_end = 0
+      if (allocated(nf_entr_start)) nf_entr_start = 0
+      if (allocated(nf_entr_end)) nf_entr_end = 0
       !
       ! Pointers to data inside COSUMO_BMI
       !
