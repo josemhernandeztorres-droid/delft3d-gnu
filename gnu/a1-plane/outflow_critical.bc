@@ -1,0 +1,25 @@
+[General]
+fileVersion = 1.01
+fileType = boundConds
+
+[forcing]
+name = outflow_0001
+function = timeseries
+timeInterpolation = linear
+quantity = time
+unit = seconds since 2026-01-01 00:00:00
+quantity = criticaloutflowbnd
+unit = -
+0 0
+7200 0
+
+[forcing]
+name = outflow_0002
+function = timeseries
+timeInterpolation = linear
+quantity = time
+unit = seconds since 2026-01-01 00:00:00
+quantity = criticaloutflowbnd
+unit = -
+0 0
+7200 0

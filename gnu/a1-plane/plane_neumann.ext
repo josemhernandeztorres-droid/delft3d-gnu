@@ -1,0 +1,15 @@
+[General]
+fileVersion = 2.01
+fileType    = extForce
+
+[Boundary]
+quantity     = neumannbnd
+locationFile = outflow.pli
+forcingFile  = outflow_neumann.bc
+
+[Meteo]
+quantity            = rainfall_rate
+forcingFile         = rain.tim
+forcingFileType     = uniform
+interpolationMethod = linearSpaceTime
+operand             = O

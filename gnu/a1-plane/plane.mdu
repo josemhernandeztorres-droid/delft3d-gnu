@@ -1,0 +1,54 @@
+# A-1 tilted plane: 200 x 100 m, slope 0.01 towards x = 200, Manning n = 0.03, rain 50 mm/h for 0-3600 s, 2 h simulated
+[General]
+Program               = D-Flow FM
+FileVersion           = 1.09
+fileType              = modelDef
+AutoStart             = 0
+PathsRelativeToParent = 0
+
+[geometry]
+NetFile               = plane_net.nc
+BedlevType            = 3            # bed at nodes, face levels mean of node values (plane -> exact at centres)
+Conveyance2D          = -1
+Kmx                   = 0
+WaterLevIni           = -999         # below bed everywhere -> dry start
+OpenBoundaryTolerance = 0.1
+
+[numerics]
+CFLMax                = 0.7
+TimeStepType          = 2
+Icgsolver             = 4
+Epshu                 = 1e-4         # wet/dry threshold [m]; h ~ 9 mm >> 1e-4
+Chkadvd               = 0.1
+
+[physics]
+UnifFrictCoef         = 0.03
+UnifFrictType         = 1            # Manning
+Vicouv                = 0
+Dicouv                = 0
+Irov                  = 0            # free-slip side walls
+Ag                    = 9.81
+
+[time]
+RefDate               = 20260101
+Tunit                 = S
+DtUser                = 60
+DtMax                 = 10
+DtInit                = 0.1
+AutoTimestep          = 1
+StartDateTime         = 20260101000000
+StopDateTime          = 20260101020000
+
+[external forcing]
+ExtForceFileNew       = plane_critical.ext   # or plane_neumann.ext
+Rainfall              = 1
+
+[output]
+OutputDir             = output
+ObsFile               = plane_obs.xyn
+CrsFile               = plane_crs.pli
+HisFile               = plane_his.nc
+HisInterval           = 60
+MapFile               = plane_map.nc
+MapInterval           = 60
+Wrihis_balance        = 1

@@ -1,0 +1,15 @@
+[General]
+fileVersion = 2.01
+fileType    = extForce
+
+[Boundary]
+quantity     = criticaloutflowbnd
+locationFile = outflow.pli
+forcingFile  = outflow_critical.bc
+
+[Meteo]
+quantity            = rainfall_rate
+forcingFile         = rain.tim
+forcingFileType     = uniform
+interpolationMethod = linearSpaceTime
+operand             = O

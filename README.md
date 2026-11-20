@@ -1,53 +1,56 @@
-# Delft3D
-This Delft3D repository contains the source code of the simulation engines of the [Delft3D 4](https://www.deltares.nl/en/software-and-data/products/delft3d-4-suite) and [Delft3D Flexible Mesh](https://www.deltares.nl/en/software-and-data/products/delft3d-flexible-mesh-suite) Suites developed by [Deltares](https://www.deltares.nl/en).
-Both modelling suites can be used for the coastal, estuarine, river, rural and urban applications.
-The Delft3D 4 Suite supports only structured grids.
-Its successor, the Delft3D FM Suite, allows for unstructured grids including 1D networks.
-The simulation engines cover hydrodynamics (D-Flow FM, Delft3D-FLOW), hydrology (D-Hydrology), real-time control (D-Real Time Control), morphodynamics (D-Morphology), waves (D-Waves, Delft3D-WAVE), water quality (D-Water Quality, Delft3D-WAQ) and particle tracking (Delft3D-PART).
+# Delft3D (D-Flow FM) with GNU compilers
 
-<div align="center">
-<img src="doc/images/Delft3D_logo.png" width="20%" alt="Delft3D logo">
-</div>
+This repository is [Deltares Delft3D](https://github.com/Deltares/Delft3D) at tag **DIMRset_2026.02**
+(commit `5a4649830b1e5072caf019fb4850bbdefd9ad431`) plus 50 small patches that let the **D-Flow FM**
+engine (`dflowfm`) build and run with **gfortran/g++ 14 and Open MPI**, on Linux x86-64 and arm64, with no Intel component.
 
-## Documentation
+- The first commit is the Deltares tag, unmodified (its tree is identical to the tag's). Each later commit is one patch.
+- The patches are portability fixes (Intel extensions that gfortran rejects, an arm64 timer) and fixes for undefined
+  behaviour that Intel builds happen to tolerate (unallocated arrays read with `size()`, undefined pointers, a reused
+  file unit). **None changes physics or numerics.** See [PATCHES.md](PATCHES.md).
+- Patch 0050 fixes a dangling file unit in `ec_provider.F90` that is a bug on any compiler; it is being reported to Deltares.
+- Licences are those of Delft3D, unchanged: [LICENSE](LICENSE), AGPL-3.0, GPL-3.0, LGPL-2.1, BSD (see the `*.txt` files).
+  The original README is [README.deltares.md](README.deltares.md).
+- This is not a Deltares product and is not supported by Deltares.
 
-For a description of the functionality included in the various components, please check the nightly draft builds of our [Delft3D 4 manuals](https://oss.deltares.nl/web/delft3d/manuals) and [Delft3D FM manuals](https://oss.deltares.nl/web/delft3dfm/downloads).
+Only the `dflowfm` executable (`dflowfm_cli_exe/dflowfm`) is built and tested. Other engines and the unit-test
+targets were not built.
 
-## Examples, tutorials and training
+## Build
 
-Most manuals (see documentation above) include a "Getting started" and/or "Tutorial" chapter.
-This repository includes a few [example input files](examples/dflowfm) for the various simulation engines.
-Furthermore, we organize various online and in-person Delft3D courses throughout the year.
-The latest overview of scheduled Deltares courses is available on the [Deltares academy website](https://academy.deltares.nl/program?session-Language=en).
+Requires Docker. From the repository root:
 
-## Support packages
+```bash
+PLATFORM=linux/amd64 gnu/build.sh     # or linux/arm64
+```
 
-If you are interested in using these products, and do not (yet) want to compile or contribute to the development, then check out the following websites for the Delft3D Service Packages (note that these Service Packages cover both Delft3D 4 and Delft3D FM):
+- `gnu/deps.Dockerfile`: Debian trixie, gfortran/g++ 14, Open MPI, NetCDF, PROJ/GDAL, Boost, preCICE 3.3.1.
+- `gnu/petsc.Dockerfile`: PETSc 3.24.5 from source (the version Deltares' CI uses; Debian's 3.22.5 does not match the
+  Fortran API of `solve_petsc.F90`).
+- `gnu/configure.sh`: the CMake call. It sets the compiler flags that `compiler_options/gnu.cmake` lacks, as cache
+  variables (no CMake file is edited); each is explained in the script.
 
-- **Delft3D 4 Suite website:** https://www.deltares.nl/en/software-and-data/products/delft3d-4-suite
-- **Delft3D FM Suite:** https://www.deltares.nl/en/software-and-data/products/delft3d-flexible-mesh-suite
+## Test case A-1 (tilted plane)
 
-and contact our **sales team:** https://www.deltares.nl/en/software-and-data/software-sales-and-support-teams
+`gnu/a1-plane/`: 200 x 100 m plane, slope 0.01, Manning n = 0.03, 50 mm/h of rain for 1 h, 2 h simulated, 2 m grid,
+outflow boundary at x = 200 (`plane_neumann.ext`, water-level gradient −0.01; or `plane_critical.ext`).
 
-## Bug reports
+```bash
+cd gnu/a1-plane && OMP_NUM_THREADS=1 dflowfm --autostartstop plane.mdu
+ncdump -v time,waterlevel,bedlevel,discharge_magnitude,water_balance_boundaries_out,water_balance_storage,water_balance_precipitation_total,water_balance_volume_error output/plane_his.nc > his.txt
+python3 a1_his.py his.txt
+```
 
-To limit the number of parallel communication channels and issue trackers, the issues tab has been removed on the Delft3D GitHub site.
-In case you encounter bugs, please report them to our **support team:** https://www.deltares.nl/en/software-and-data/software-sales-and-support-teams
+Measured (Neumann boundary): rain 1000.00 m³; outflow after 1 h 821.30 m³; storage closure 0.0000 m³ (volume error
+−4e-10 m³); mean depth at x = L/2 between 1800 and 3600 s 9.445 mm, +0.77 % against the kinematic-wave value 9.373 mm.
 
-## Open Source Community
+The x86-64 `-O2` build, the arm64 `-O0 -fcheck=all` build and the arm64 `-O2 -ffp-contract=off` build give
+bit-identical his and map files on this case. Plain arm64 `-O2` differs only through GCC's FMA contraction on
+aarch64 (volume error ≤ 7e-10 m³).
 
-We have community websites for [Delft3D 4](https://oss.deltares.nl/web/delft3d) and [Delft3D FM](https://oss.deltares.nl/web/delft3dfm).
-Source code repositories for the Delft3D [simulation engines](https://github.com/Deltares/Delft3D) (self-reference to this page unless you're looking at a forked version), the MATLAB-based postprocessing package [QUICKPLOT](https://github.com/Deltares/QUICKPLOT), the Python-based pre- and postprocessing packages [dfm_tools](https://github.com/Deltares/dfm_tools) and [hydrolib-core](https://github.com/Deltares/HYDROLIB-core), and our grid generation library [MeshKernel](https://github.com/Deltares/MeshKernel).
+## Notes
 
-A set of pre-compiled user interfaces (Windows only) is available for Delft3D 4 after registration on the Deltares software website.
-See [this page](https://download.deltares.nl/en/delft3d-4-gui-open-source) for details.
-A similar package for Delft3D FM is expected to be released in the coming months.
-
-### Compilation and development
-For information on compiling, testing and development see the [development](doc/development.md) page.
-
-### Contributing
-If you want to contribute improvements or new features to our codebase, please see the [contributing](doc/contributing.md) page for information about developer guidelines, code branches and our review process.
-
-## License
-Most simulation engines are licensed under AGPL-3.0 or GPL-3.0, several utility libraries are licensed under LGPL-2.1, and several third-party packages under their original license. Details are listed in the respective subdirectories or source files.
+- [LATERALS.md](LATERALS.md): how 2D lateral discharges are sampled in time, and settings we use when running meshes
+  made for other engines.
+- Known leftover: with gfortran, a stray file named `output\plane.dia` (backslash in the name) is written next to the
+  correct `output/plane.dia`. It does not affect the run.
