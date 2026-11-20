@@ -95,6 +95,15 @@ static __inline__ unsigned long long rdtsc(void)
     return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
 }
 
+#elif defined(__aarch64__)
+
+static __inline__ unsigned long long rdtsc(void)
+{
+    unsigned long long v;
+    __asm__ __volatile__ ("mrs %0, cntvct_el0" : "=r"(v));
+    return v;
+}
+
 #endif
 
 unsigned long long CpuInfo::GetClockSpeed()
