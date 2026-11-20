@@ -426,7 +426,7 @@ module fm_external_forcings_data
    real(kind=dp), dimension(:,:), allocatable :: source_sink_discharge_cosine !< [-] Cosine of discharge on sink side (1) and source side (2). {size=(2,num_source_sink), former:cssrc}
    real(kind=dp), dimension(:,:), allocatable :: source_sink_discharge_sine !< [-] Sine of discharge on sink side (1) and source side (2). {size=(2,num_source_sink), former:snsrc}
    
-   ! Discharge variables. _all_discharges is read out from the *.tim/*.bc file using the EC module, while _water_discharge and _constituents are used for internal computations.
+   ! Discharge variables. _all_discharges is read out from the *.tim or *.bc file using the EC module, while _water_discharge and _constituents are used for internal computations.
    real(kind=dp), dimension(:,:), allocatable, target :: source_sink_all_discharges !< [m3/s,ppt,degC,kg/m3] Source/sink water discharge (1) and constituent concentrations of discharge (2:). {size=(numconst+1,num_source_sink), former:qstss}
    real(kind=dp), dimension(:), target, allocatable :: source_sink_water_discharge !< [m3/s] Water discharge of source/sink. {size=(num_source_sink), former:qsrc}
    real(kind=dp), dimension(:,:), allocatable :: source_sink_constituents !< [ppt,degC,kg/m3] Constituents of source/sink discharges. {size=(numconst,num_source_sink), former:ccsrc}
