@@ -615,6 +615,9 @@ contains
          call realloc(config_set%configs(num_entries)%additional_attributes, num_attributes, keepExisting=.false.)
          config_set%configs(num_entries)%additional_attributes%count = num_attributes
          config_set%configs(num_entries)%additional_attributes%atts = nc_attributes
+      else
+         call realloc(config_set%configs(num_entries)%additional_attributes, 0, keepExisting=.false.)
+         config_set%configs(num_entries)%additional_attributes%count = 0
       end if
 
       if (present(description)) then
