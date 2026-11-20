@@ -1,0 +1,60 @@
+!----- AGPL --------------------------------------------------------------------
+!
+!  Copyright (C)  Stichting Deltares, 2017-2026.
+!
+!  This file is part of Delft3D (D-Flow Flexible Mesh component).
+!
+!  Delft3D is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU Affero General Public License as
+!  published by the Free Software Foundation version 3.
+!
+!  Delft3D  is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU Affero General Public License for more details.
+!
+!  You should have received a copy of the GNU Affero General Public License
+!  along with Delft3D.  If not, see <http://www.gnu.org/licenses/>.
+!
+!  contact: delft3d.support@deltares.nl
+!  Stichting Deltares
+!  P.O. Box 177
+!  2600 MH Delft, The Netherlands
+!
+!  All indications and logos of, and references to, "Delft3D",
+!  "D-Flow Flexible Mesh" and "Deltares" are registered trademarks of Stichting
+!  Deltares, and remain the property of Stichting Deltares. All rights reserved.
+!
+!-------------------------------------------------------------------------------
+
+!
+!
+
+!
+module m_dispf2
+
+   implicit none
+
+contains
+
+   subroutine DISPF2(X, Y, N, NMAX, NCOL)
+      use precision, only: dp
+      use m_set_col, only: setcol
+      use m_movabs, only: movabs
+      use m_lnabs, only: lnabs
+
+      integer :: i
+      integer :: n
+      integer :: ncol
+      integer :: nmax
+!     LAAT EENDIMENSIONALE FUNCTIE ZIEN
+      real(kind=dp) :: X(NMAX), Y(NMAX)
+      call SETCOL(NCOL)
+      call MOVABS(X(1), Y(1))
+      do I = 2, N
+         call LNABS(X(I), Y(I))
+      end do
+      return
+   end
+
+end module m_dispf2

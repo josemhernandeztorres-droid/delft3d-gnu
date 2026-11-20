@@ -1,0 +1,130 @@
+!----- AGPL --------------------------------------------------------------------
+!
+!  Copyright (C)  Stichting Deltares, 2017-2026.
+!
+!  This file is part of Delft3D (D-Flow Flexible Mesh component).
+!
+!  Delft3D is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU Affero General Public License as
+!  published by the Free Software Foundation version 3.
+!
+!  Delft3D  is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU Affero General Public License for more details.
+!
+!  You should have received a copy of the GNU Affero General Public License
+!  along with Delft3D.  If not, see <http://www.gnu.org/licenses/>.
+!
+!  contact: delft3d.support@deltares.nl
+!  Stichting Deltares
+!  P.O. Box 177
+!  2600 MH Delft, The Netherlands
+!
+!  All indications and logos of, and references to, "Delft3D",
+!  "D-Flow Flexible Mesh" and "Deltares" are registered trademarks of Stichting
+!  Deltares, and remain the property of Stichting Deltares. All rights reserved.
+!
+!-------------------------------------------------------------------------------
+
+!> sort flowlinks in nd%ln counterclockwise (copy-paste and modified from above)
+module m_sort_flowlinks_ccw
+
+   implicit none
+
+   private
+
+   public :: sort_flowlinks_ccw
+
+contains
+
+   subroutine sort_flowlinks_ccw()
+      use precision, only: dp
+      use m_flowgeom, only: xz, yz, nd, Ndx, ln
+      use m_sferic, only: jsferic, pi
+      use m_alloc, only: realloc
+      use geometry_module, only: getdxdy
+      use stdlib_sorting, only: sort_index
+
+      integer :: k ! node number
+      integer :: maxlin ! array size
+      real(kind=dp), dimension(:), allocatable :: arglin ! dummy array
+      integer, dimension(:), allocatable :: linnrs, inn ! dummy arrays
+
+      integer :: k1, k2, L
+
+      real(kind=dp) :: phi0
+
+      real(kind=dp) :: phi, dx, dy
+
+      integer :: lnxx
+
+      maxlin = 6
+
+      allocate (linnrs(maxlin), arglin(maxlin), inn(maxlin))
+
+      do k = 1, Ndx
+         lnxx = nd(k)%lnx
+
+         if (lnxx <= 1) then
+            cycle
+         end if
+
+         if (lnxx > maxlin) then
+            maxlin = lnxx
+            call realloc(linnrs, maxlin, keepExisting=.true.)
+            call realloc(arglin, maxlin, keepExisting=.true.)
+            call realloc(inn, maxlin, keepExisting=.true.)
+         end if
+
+         do L = 1, lnxx
+            K1 = ln(1, abs(nd(K)%ln(L)))
+            K2 = ln(2, abs(nd(K)%ln(L)))
+            if (K2 == K) then
+               K2 = K1
+               K1 = K
+            end if
+
+            call getdxdy(xz(k1), yz(k1), xz(k2), yz(k2), dx, dy, jsferic)
+            if (abs(dx) < 1.0e-14_dp .and. abs(dy) < 1.0e-14_dp) then
+               if (dy < 0) then
+                  phi = -pi / 2
+               else
+                  phi = pi / 2
+               end if
+            else
+               phi = atan2(dy, dx)
+            end if
+            if (L == 1) then
+               phi0 = phi
+            end if
+
+            arglin(L) = phi - phi0
+            if (arglin(L) < 0.0_dp) then
+               arglin(L) = arglin(L) + 2.0_dp * pi
+            end if
+         end do
+
+         call sort_index(arglin(1:lnxx), inn(1:lnxx))
+
+         linnrs(1:lnxx) = nd(k)%ln(1:lnxx)
+         do L = 1, lnxx
+            nd(k)%ln(L) = linnrs(inn(L))
+         end do
+
+      end do ! do k=1,Ndx
+
+      if (allocated(linnrs)) then
+         deallocate (linnrs)
+      end if
+      if (allocated(arglin)) then
+         deallocate (arglin)
+      end if
+      if (allocated(inn)) then
+         deallocate (inn)
+      end if
+
+      return
+   end subroutine sort_flowlinks_ccw
+
+end module m_sort_flowlinks_ccw

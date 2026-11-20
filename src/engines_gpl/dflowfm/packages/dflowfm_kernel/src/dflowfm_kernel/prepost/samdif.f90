@@ -1,0 +1,138 @@
+!----- AGPL --------------------------------------------------------------------
+!
+!  Copyright (C)  Stichting Deltares, 2017-2026.
+!
+!  This file is part of Delft3D (D-Flow Flexible Mesh component).
+!
+!  Delft3D is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU Affero General Public License as
+!  published by the Free Software Foundation version 3.
+!
+!  Delft3D  is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU Affero General Public License for more details.
+!
+!  You should have received a copy of the GNU Affero General Public License
+!  along with Delft3D.  If not, see <http://www.gnu.org/licenses/>.
+!
+!  contact: delft3d.support@deltares.nl
+!  Stichting Deltares
+!  P.O. Box 177
+!  2600 MH Delft, The Netherlands
+!
+!  All indications and logos of, and references to, "Delft3D",
+!  "D-Flow Flexible Mesh" and "Deltares" are registered trademarks of Stichting
+!  Deltares, and remain the property of Stichting Deltares. All rights reserved.
+!
+!-------------------------------------------------------------------------------
+
+!
+!
+
+!> take difference of samples with second sample set within tooclose distance
+module m_samdif
+
+   implicit none
+
+   private
+
+   public :: samdif
+
+contains
+
+   subroutine samdif()
+      use precision, only: dp
+      use m_polygon, only: increasepol, npl, xpl, ypl, zpl
+      use m_samples, only: ns, ns3, xs3, ys3, savesam, xs, ys, zs, zs3
+      use kdtree2Factory, only: build_kdtree, treeglob, realloc_results_kdtree, make_queryvector_kdtree, kdtree2_n_nearest, itree_empty, delete_kdtree2
+      use m_missing, only: dmiss
+      use m_delpol, only: delpol
+      use network_data, only: tooclose
+      use m_sferic, only: jsferic, jasfer3D
+      use geometry_module, only: dbdistance
+
+      real(kind=dp) :: dist
+
+      integer :: i, ipnt, ierror
+      integer :: numnoval
+
+      real(kind=dp), parameter :: VAL_NOPNT = 1234.0_dp
+      real(kind=dp), parameter :: dtol = 1.0e-8_dp
+
+      if (NS < 1 .or. NS3 < 2) then
+         goto 1234
+      end if
+
+!  build kdtree
+      call build_kdtree(treeglob, NS3, xs3, ys3, ierror, jsferic, dmiss)
+
+!  reallocate results vector (fixed size)
+      call realloc_results_kdtree(treeglob, 1)
+
+      if (ierror /= 0) then
+         goto 1234
+      end if
+
+      call savesam()
+
+      numnoval = 0 ! count number of samples without a polygon node
+      do i = 1, Ns
+!     fill query vector
+         call make_queryvector_kdtree(treeglob, xs(i), ys(i), jsferic)
+
+!     find nearest polygon point
+         call kdtree2_n_nearest(treeglob%tree, treeglob%qv, 1, treeglob%results)
+         ipnt = treeglob%results(1)%idx
+
+         if (ipnt > 0 .and. ipnt <= Ns3) then ! safety
+!        check distance to nearest polygon node
+            dist = dbdistance(xs(i), ys(i), xs3(ipnt), ys3(ipnt), jsferic, jasfer3D, dmiss)
+            if (dist < tooclose .and. zs(i) /= DMISS .and. zs3(ipnt) /= DMISS) then
+               zs(i) = zs(i) - zs3(ipnt)
+
+!           remove (nearly) zero values
+               if (abs(zs(i)) < dtol) then
+                  zs(i) = DMISS
+               end if
+            else
+               zs(i) = VAL_NOPNT
+               numnoval = numnoval + 1
+            end if
+         else
+            zs(i) = VAL_NOPNT
+            numnoval = numnoval + 1
+         end if
+      end do
+
+      call delpol()
+
+      if (numnoval > 0) then
+!     copy unassociated samples to polygon
+         call increasepol(numnoval, 0)
+
+         NPL = 0
+         do i = 1, NS
+            if (zs(i) == VAL_NOPNT) then
+               zs(i) = DMISS
+               NPL = NPL + 1
+               xpl(NPL) = xs(i)
+               ypl(NPL) = ys(i)
+               zpl(NPL) = zs(i)
+            end if
+         end do
+      end if
+
+      ierror = 0
+
+1234  continue
+
+!  deallocate kdtree if it was created
+      if (treeglob%itreestat /= ITREE_EMPTY) then
+         call delete_kdtree2(treeglob)
+      end if
+
+      return
+   end subroutine samdif
+
+end module m_samdif

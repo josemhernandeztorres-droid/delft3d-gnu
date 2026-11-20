@@ -1,0 +1,66 @@
+set(library_name delwaq_lib)
+
+# Set version file variables
+set(waq_root_path ${CMAKE_CURRENT_SOURCE_DIR}/../)
+set(rc_version_file ${waq_root_path}/resources/version/version_number.rc)
+set(version_include_dir ${CMAKE_SOURCE_DIR}/../version_includes)
+
+create_target(
+        ${library_name} ${CMAKE_CURRENT_SOURCE_DIR}
+        src_dir .
+        recursive TRUE
+        resource_files ${rc_version_file}
+        shared
+)
+
+# Set dependencies
+set(oss_dependencies waq_external_access_layer waq_plugin_wasteload)
+
+if(WIN32)
+        target_link_libraries(${library_name} PRIVATE ${oss_dependencies})
+
+        # Set linker properties
+        target_link_directories(${library_name}
+                PRIVATE
+                "${mpi_library_path}"
+                "${checkout_src_root}/third_party_open/netcdf/${netcdf_version}/lib"
+                "${checkout_src_root}/third_party_open/pthreads/bin/x64")
+
+        target_link_libraries(${library_name} PRIVATE
+                "libiomp5md.lib"
+                "${mpi_fortran_library}"
+                "WbeMuuid.lib"
+                "ole32.lib"
+                "oleaut32.lib"
+                "wsock32.lib"
+                "netapi32.lib"
+                "kernel32.lib"
+                "user32.lib"
+                "Shlwapi.lib"
+                "Gdi32.lib"
+                "Winspool.lib"
+                "netcdf.lib"
+                "pthreadVC2.lib")
+
+        # Set linker options
+        target_link_options(${library_name} PRIVATE ${nologo_flag})
+endif(WIN32)
+
+if(UNIX)
+        target_link_libraries(${library_name} PRIVATE ${oss_dependencies}
+                uuid)
+        target_link_options(${library_name} PRIVATE ${openmp_flag})
+endif(UNIX)
+
+target_compile_options(${library_name} PRIVATE "${openmp_flag}")
+target_compile_options(${library_name} PRIVATE ${waq_default_flags})
+
+target_include_directories(${library_name} PRIVATE ${version_include_dir})
+set_target_properties(${library_name} PROPERTIES FOLDER engines_gpl/waq)
+
+# Change the name of the target library to delwaq.dll
+set_target_properties(${library_name} PROPERTIES OUTPUT_NAME delwaq)
+
+install(TARGETS ${library_name} RUNTIME DESTINATION lib
+                                LIBRARY DESTINATION lib
+)

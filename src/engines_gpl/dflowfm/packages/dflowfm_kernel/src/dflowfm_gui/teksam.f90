@@ -1,0 +1,222 @@
+!----- AGPL --------------------------------------------------------------------
+!
+!  Copyright (C)  Stichting Deltares, 2017-2026.
+!
+!  This file is part of Delft3D (D-Flow Flexible Mesh component).
+!
+!  Delft3D is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU Affero General Public License as
+!  published by the Free Software Foundation version 3.
+!
+!  Delft3D  is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU Affero General Public License for more details.
+!
+!  You should have received a copy of the GNU Affero General Public License
+!  along with Delft3D.  If not, see <http://www.gnu.org/licenses/>.
+!
+!  contact: delft3d.support@deltares.nl
+!  Stichting Deltares
+!  P.O. Box 177
+!  2600 MH Delft, The Netherlands
+!
+!  All indications and logos of, and references to, "Delft3D",
+!  "D-Flow Flexible Mesh" and "Deltares" are registered trademarks of Stichting
+!  Deltares, and remain the property of Stichting Deltares. All rights reserved.
+!
+!-------------------------------------------------------------------------------
+
+!
+!
+
+module m_teksam
+
+   implicit none
+
+contains
+
+   subroutine TEKSAM(MET)
+      use precision, only: dp
+
+      use m_settextsize
+      use m_minmxsam
+      use unstruc_colors
+      use m_missing, only: DMISS
+      use unstruc_opengl, only: jaopengl
+      use m_samples
+      use m_arcinfo
+      use m_perspx
+      use m_halt2
+      use m_set_col
+
+      real(kind=dp) :: RC
+      real(kind=dp) :: hrc
+      integer :: i, KMOD
+      integer :: key
+      real(kind=dp) :: x
+      real(kind=dp) :: y
+      real(kind=dp) :: z
+      integer :: MET
+!     TEKEN SAMPLES
+
+      if (MET == 0) then
+         return
+      end if
+
+      if (MET == 4 .or. MET == 5) then
+         call SETTEXTSIZE()
+      end if
+      RC = 1.7_dp * RCIR
+      HRC = RCIR / 2
+      KMOD = max(1, NS / 100)
+      key = 0
+
+!     Fix for OpenGL rendering
+      if (jaopengl == 1 .and. MET == 1) then
+         MET = 7
+      end if
+
+      if (met == 5) then
+         call SETCOL(KLSAM)
+      else
+         call minmxsam()
+      end if
+
+      do I = 1, NS
+
+         if (mod(I, KMOD) == 0) then
+            call HALT2(KEY)
+            if (KEY == 1) then
+               return
+            end if
+         end if
+
+         X = XS(I)
+         Y = YS(I)
+         Z = ZS(I)
+
+         if (Z == DMISS) then
+            cycle ! SPvdP: structured sample data may comprise missing values
+         end if
+
+         call tek1sample(x, y, z, met, hrc, i)
+
+      end do
+
+      call IGRFILLPATTERN(4, 0, 0)
+      call IGRCHARDIRECTION('H')
+      return
+   end subroutine TEKSAM
+
+   subroutine TEKarc(MET)
+      use precision, only: dp
+      use m_settextsize
+      use m_minmxsam
+      use m_arcinfo
+      use unstruc_display
+      use m_missing, only: DMISS
+      use m_halt2
+      use m_set_col
+
+      implicit none
+      real(kind=dp) :: hrc, rc, x, y, z
+      integer :: met, m, n, key
+
+      if (MET == 4 .or. MET == 5) then
+         call SETTEXTSIZE()
+      end if
+      RC = 1.7_dp * RCIR
+      HRC = RCIR / 2
+
+      if (met == 5) then
+         call SETCOL(KLSAM)
+      else
+         call minmxarc()
+      end if
+
+      do n = 1, nca
+
+         call HALT2(KEY)
+         if (KEY == 1) then
+            return
+         end if
+         do m = 1, mca
+
+            z = d(m, n)
+            if (z == dmiss) then
+               cycle
+            end if
+            x = x0 + dxa * (m - 1)
+            y = y0 + dya * (n - 1)
+            call tek1sample(x, y, z, met, hrc, m)
+
+         end do
+      end do
+   end subroutine TEKarc
+
+   subroutine tek1sample(x, y, z, met, hrc, m)
+      use precision, only: dp
+      use m_isocol2
+      use m_cir
+      use m_box
+      use unstruc_colors
+      use unstruc_display
+      use m_arcinfo
+      use m_drawthis
+      use m_htext
+      use m_hi_text
+      use m_krec5
+      use m_set_col
+      use m_inview
+      use m_movabs
+      use m_ptabs
+
+      implicit none
+
+      real(kind=dp) :: x, y, z, hrc
+      integer :: met, m, ncol
+
+      if (INVIEW(X, Y)) then
+         if (NDRAW(9) == 2) then
+!            CALL VIEW(XS(I),YS(I),ZS(I),X0S,Y0S,VS,X,Y,ZC)
+         end if
+         if (MET /= 5) then
+            call ISOCOL2(Z, NCOL)
+         end if
+         if (MET == 1 .or. MET == 2) then
+            if (NDRAW(9) == 1) then
+!
+!               CALL MOVABS(X,Y)
+!               CALL CIR(RCIR)
+!!              CALL HTEXT(ZS(I),X,Y)
+
+               call box(x - 0.5_dp * rcir, y - 0.5_dp * rcir, x + 0.5_dp * rcir, y + 0.5_dp * rcir)
+
+               if (MET == 2) then
+                  call MOVABS(X, Y)
+                  call IGRFILLPATTERN(0, 0, 0)
+                  call SETCOL(1)
+                  call CIR(RCIR)
+                  call IGRFILLPATTERN(4, 0, 0)
+               end if
+
+            end if
+         else if (MET == 3) then
+            call PTABS(X, Y)
+         else if (MET == 4 .or. MET == 5) then
+            call HTEXT(Z, X, Y)
+         else if (MET == 6) then
+            call MOVABS(X, Y)
+            call CIR(RCIR)
+            call HTEXT(Z, X + rcir, Y)
+         else if (MET == 7) then
+            call KREC5(X, Y, HRC, HRC)
+         else if (MET == 8) then
+            call HITEXT(m, X, Y)
+         end if
+      end if
+
+   end subroutine tek1sample
+
+end module m_teksam

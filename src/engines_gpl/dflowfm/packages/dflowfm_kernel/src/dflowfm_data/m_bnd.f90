@@ -1,0 +1,148 @@
+!----- AGPL --------------------------------------------------------------------
+!
+!  Copyright (C)  Stichting Deltares, 2017-2026.
+!
+!  This file is part of Delft3D (D-Flow Flexible Mesh component).
+!
+!  Delft3D is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU Affero General Public License as
+!  published by the Free Software Foundation version 3.
+!
+!  Delft3D  is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU Affero General Public License for more details.
+!
+!  You should have received a copy of the GNU Affero General Public License
+!  along with Delft3D.  If not, see <http://www.gnu.org/licenses/>.
+!
+!  contact: delft3d.support@deltares.nl
+!  Stichting Deltares
+!  P.O. Box 177
+!  2600 MH Delft, The Netherlands
+!
+!  All indications and logos of, and references to, "Delft3D",
+!  "D-Flow Flexible Mesh" and "Deltares" are registered trademarks of Stichting
+!  Deltares, and remain the property of Stichting Deltares. All rights reserved.
+!
+!-------------------------------------------------------------------------------
+
+!
+!
+
+! todo: MERGE THIS WITH UNSTRUC_BOUNDARIES
+module m_bnd !< boundary-type module
+   use precision, only: dp
+   implicit none
+   integer, parameter :: NAMLEN = 128
+
+   type bndtype
+      character(len=NAMLEN) :: name !< boundary-type name
+      integer :: N !< number of boundary points
+      real(kind=dp), dimension(:), allocatable :: x !< inner node x-coordinates
+      real(kind=dp), dimension(:), allocatable :: y !< inner node y-coordinates
+      real(kind=dp), dimension(:), allocatable :: sigma !< sigma-values
+      real(kind=dp), dimension(:), allocatable :: zminmax !< zmin and zmax
+      real(kind=dp), dimension(:), allocatable :: z !< boundary condition values
+      real(kind=dp), dimension(:, :), allocatable :: xy2 !< outer-node (x,y)-coordinates
+      integer, dimension(:), allocatable :: kd !< boundary points
+      integer, dimension(:, :), allocatable :: k !< index array, see e.g. kbnd
+      real(kind=dp), dimension(:), allocatable :: tht !< Thatcher-Harleman outflow time
+      real(kind=dp), dimension(:), allocatable :: thz !< Thatcher-Harleman concentration
+   end type bndtype
+
+contains
+
+!> deallocate boundary-type
+   subroutine dealloc_bnd(bnd)
+      implicit none
+
+      type(bndtype), intent(inout) :: bnd !< boundary data
+
+      if (allocated(bnd%x)) then
+         deallocate (bnd%x)
+      end if
+      if (allocated(bnd%y)) then
+         deallocate (bnd%y)
+      end if
+      if (allocated(bnd%sigma)) then
+         deallocate (bnd%sigma)
+      end if
+      if (allocated(bnd%zminmax)) then
+         deallocate (bnd%zminmax)
+      end if
+      if (allocated(bnd%z)) then
+         deallocate (bnd%z)
+      end if
+      if (allocated(bnd%xy2)) then
+         deallocate (bnd%xy2)
+      end if
+      if (allocated(bnd%kd)) then
+         deallocate (bnd%kd)
+      end if
+      if (allocated(bnd%k)) then
+         deallocate (bnd%k)
+      end if
+
+      return
+   end subroutine dealloc_bnd
+
+!> (re)allocate boundary-type
+   subroutine alloc_bnd(N, kmx, bnd)
+      implicit none
+
+      integer, intent(in) :: N !< number of boundary points
+      integer, intent(in) :: kmx !< maximum number of layers
+      type(bndtype), intent(inout) :: bnd !< boundary data
+
+      call dealloc_bnd(bnd)
+
+      if (N > 0) then
+         allocate (bnd%x(N))
+         allocate (bnd%y(N))
+
+         allocate (bnd%xy2(2, N))
+         allocate (bnd%kd(N))
+         allocate (bnd%k(5, N))
+
+         bnd%x = 0.0_dp
+         bnd%y = 0.0_dp
+         bnd%xy2 = 0.0_dp
+         bnd%kd = 0
+         bnd%k = 0
+
+         if (kmx > 0) then
+            allocate (bnd%sigma(kmx * N))
+            allocate (bnd%zminmax(2 * N))
+            allocate (bnd%z(kmx * N))
+            bnd%sigma = 0.0_dp
+            bnd%z = 0.0_dp
+         else
+            allocate (bnd%z(N))
+            bnd%z = 0.0_dp
+         end if
+      end if
+
+      return
+   end subroutine alloc_bnd
+
+   !> deallocate bndtr
+   subroutine dealloc_bndarr(bndarr)
+      implicit none
+
+      type(bndtype), dimension(:), allocatable, intent(inout) :: bndarr
+
+      integer :: i, numbnd
+
+      if (allocated(bndarr)) then
+         numbnd = ubound(bndarr, 1)
+         do i = 1, numbnd
+            call dealloc_bnd(bndarr(i))
+         end do
+         deallocate (bndarr)
+      end if
+
+      return
+   end subroutine dealloc_bndarr
+
+end module m_bnd

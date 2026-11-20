@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<deltaresTestbench_v3 xmlns="http://schemas.deltares.nl/deltaresTestbench_v3"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://schemas.deltares.nl/deltaresTestbench_v3 http://content.oss.deltares.nl/schemas/deltaresTestbench_v3-2.00.xsd">
+                <!--
+                Basic Linux   configuration file: tb3_cfg_lnx64_hp.xml
+                Basic Windows configuration file: tb3_cfg_win32_hp.xml
+                From hp to sp      : Replace "config_d_hydro.xml" by "config_d_hydro_sp.xml" (all occurences)
+                From hp to parallel: Use mpi as shell (in related program)
+                                     Overrule maxruntime when needed
+                                     Only cases that run in parallel mode
+                -->
+    <config>
+        <localPaths>
+            <testCasesDir>.\data\cases</testCasesDir>
+            <enginesDir>.\data\engines\delft3d\win32</enginesDir>
+            <referenceDir>.\data\reference_results</referenceDir>
+        </localPaths>
+        <locations>
+            <location name="testbench_ref_engines">
+                <credential ref="commandline"/>
+                <root>..\..\nefis\engines_as_reference</root>
+            </location>
+            <location name="dsctestbench_reference_results">
+                <credential ref="commandline"/>
+                <root>{server_base_url}/references</root>
+            </location>
+            <location name="dsctestbench_cases">
+                <credential ref="commandline"/>
+                <root>{server_base_url}/cases</root>
+            </location>
+            <location name="engines_to_compare">
+                <credential ref="commandline"/>
+                <root>..\..\nefis\engines_to_compare</root>
+            </location>
+            <location name="local">
+                <root>./data/engines</root>
+     	    </location>
+        </locations>
+    </config>
+
+    <!--
+    Programs
+    -->
+    <!--
+    The order is important. Start with the following programs:
+        command_prompt
+        mpi
+    -->
+    <programs>
+        <program name="command_prompt">
+            <path>cmd</path>
+            <arguments>
+                <argument>/C</argument>
+            </arguments>
+        </program>
+        <program name="nefis_test" logOutputToFile="true">
+            <shell ref="command_prompt"/>
+            <location ref="testbench_ref_engines" type="reference">
+                <from>win32</from>
+            </location>
+            <location ref="local" type="check">
+                <from>teamcity_artifacts/x64/test/nefis</from>
+            </location>
+            <path>run_test.bat</path>
+        </program>
+    </programs>
+
+    <!--
+    default testCases
+        Testcases may refer to a default testCase with the attribute
+        ref="name_of_default_testcase"
+    -->
+
+    <defaultTestCases>
+        <testCase name="test_default">
+            <programs>
+                <program ref="test"/>
+            </programs>
+            <location ref="dsctestbench_cases" type="input">
+                <from>.</from>
+            </location>
+            <location ref="dsctestbench_reference_results" type="reference">
+                <from>win64</from>
+            </location>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+    </defaultTestCases>
+
+    <!--
+    testCases
+    -->
+
+    <testCases>
+        <testCase name="e80_f01_c00" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c00</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>00 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c01" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c01</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>01 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c02" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c02</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>02 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c03" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c03</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>03 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c10" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c10</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>10 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c11" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c11</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>11 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c17" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c17</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>17 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c18" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c18</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>18 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c19" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c19</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>19 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c20" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c20</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>20 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+        <testCase name="e80_f01_c21" ref="test_default">
+            <path version="2025-07-15T11:16:00">e80_nefis/f01/c20</path>
+            <programs>
+                <program ref="nefis_test">
+                    <arguments>
+                        <argument>20 &gt;test.scr 2&gt;&amp;1</argument>
+                    </arguments>
+                </program>
+            </programs>
+            <checks>
+                <file name="test.scr" type="NUMBERTEXT">
+                    <skipline>[V|v]ersion</skipline>
+                    <skipline>-----</skipline>
+                </file>
+            </checks>
+            <maxRunTime>6.0</maxRunTime> <!-- seconds -->
+        </testCase>
+    </testCases>
+</deltaresTestbench_v3>

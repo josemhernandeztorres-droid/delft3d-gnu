@@ -1,0 +1,215 @@
+!----- AGPL --------------------------------------------------------------------
+!
+!  Copyright (C)  Stichting Deltares, 2017-2026.
+!
+!  This file is part of Delft3D (D-Flow Flexible Mesh component).
+!
+!  Delft3D is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU Affero General Public License as
+!  published by the Free Software Foundation version 3.
+!
+!  Delft3D  is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU Affero General Public License for more details.
+!
+!  You should have received a copy of the GNU Affero General Public License
+!  along with Delft3D.  If not, see <http://www.gnu.org/licenses/>.
+!
+!  contact: delft3d.support@deltares.nl
+!  Stichting Deltares
+!  P.O. Box 177
+!  2600 MH Delft, The Netherlands
+!
+!  All indications and logos of, and references to, "Delft3D",
+!  "D-Flow Flexible Mesh" and "Deltares" are registered trademarks of Stichting
+!  Deltares, and remain the property of Stichting Deltares. All rights reserved.
+!
+!-------------------------------------------------------------------------------
+
+module m_corioliskelvin
+   use m_statisticsonemorepoint, only: statisticsonemorepoint
+   use m_statisticsnewstep, only: statisticsnewstep
+   use m_statisticsfinalise, only: statisticsfinalise
+
+   implicit none
+
+   private
+
+   public :: corioliskelvin, oceaneddy
+
+contains
+
+   subroutine corioliskelvin(tim)
+      use precision, only: dp
+      use m_netw
+      use m_flowgeom
+      use m_flow
+      use m_sferic
+      use unstruc_display
+      use m_ini_sferic
+
+      real(kind=dp) :: tim
+
+      integer :: k, L, k1, k2
+      real(kind=dp) :: s1k, xx, yy, samp, dif, cs, sn, aer, dep, r0, x0, y0, Rossby, rr, sgh
+
+      if (tim == 0.0_dp) then
+         call inisferic()
+      end if
+
+      dep = sini - zkuni
+      sgh = sqrt(ag / dep)
+      Rossby = sqrt(ag * dep) / fcorio
+      r0 = 0.5_dp * (xkmax - xkmin)
+      x0 = 0.5_dp * (xkmax + xkmin)
+      y0 = 0.5_dp * (ykmax + ykmin)
+      samp = 0.05_dp
+
+      call statisticsnewstep()
+
+      do k = 1, ndx
+         yy = yz(k) - y0
+         xx = xz(k) - x0
+         rr = sqrt(xx * xx + yy * yy)
+         cs = xx / rr
+         sn = yy / rr
+
+         aer = samp * exp((rr - r0) / Rossby)
+         s1k = aer * cs
+
+         if (tim == 0) then
+            s1(k) = max(bl(k), s1k)
+            s0(k) = s1(k)
+            ucx(k) = -s1k * sgh * sn
+            ucy(k) = s1k * sgh * cs
+         end if
+
+         dif = abs(s1(k) - s1k)
+         call statisticsonemorepoint(dif)
+      end do
+
+      if (tim == 0) then
+         do L = 1, Lnx
+            k1 = ln(1, L)
+            k2 = ln(2, L)
+            u1(L) = 0.5_dp * (ucx(k1) + ucx(k2)) * csu(L) + 0.5_dp * (ucy(k1) + ucy(k2)) * snu(L)
+            u0(L) = u1(L)
+         end do
+      end if
+
+      call statisticsfinalise()
+   end subroutine corioliskelvin
+
+   subroutine oceaneddy(tim)
+      use precision, only: dp
+      use m_netw
+      use m_flowgeom
+      use m_flow
+      use m_sferic, only: fcorio
+      use m_set_kbot_ktop
+      use m_ini_sferic
+      use m_dbdistance_hk
+      implicit none
+
+      integer :: k, L, k1, k2, LL, i, j, imx, jmx
+      real(kind=dp) :: tim, s1k, xx, yy, samp, cs, sn, dep, rs
+      real(kind=dp) :: x0, y0, Rossby, rr, sgh, uv, uvr, xff = 0.1_dp, yff = 0.1_dp
+
+      if (tim == 0.0_dp) then
+         call inisferic()
+      end if
+
+      dep = sini - zkuni
+      sgh = sqrt(ag / dep)
+      Rossby = sqrt(ag * dep) / fcorio
+      call dbdistancehk(xkmin, ykmin, xkmax, ykmax, rs)
+      rs = oceaneddysizefrac * rs
+      if (oceaneddysize /= 0.0_dp) then
+         rs = oceaneddysize
+      end if
+      samp = oceaneddyamp
+      if (oceaneddyvel > 0.0_dp) then
+         samp = oceaneddyvel * 2.0_dp * fcorio * rs / ag
+      end if
+      uv = ag / (2.0_dp * fcorio * rs * rs)
+
+      !call statisticsnewstep()
+
+      xff = oceaneddyxoff
+      yff = oceaneddyyoff
+      imx = 1
+      jmx = 1
+      if (oceaneddyxoff /= 0.0_dp) then
+         imx = 2
+      end if
+      if (oceaneddyyoff /= 0.0_dp) then
+         jmx = 2
+      end if
+
+      do i = 1, imx
+         if (i == 2) then
+            xff = -xff
+            samp = -samp
+         end if
+
+         do j = 1, jmx
+
+            if (j == 2) then
+               yff = -yff
+               samp = -samp
+            end if
+
+            x0 = (0.5_dp + xff) * xkmax + (0.5_dp - xff) * xkmin
+            y0 = (0.5_dp + yff) * ykmax + (0.5_dp - yff) * ykmin
+
+            do k = 1, ndx
+               call dbdistancehk(xz(k), yz(k), x0, y0, rr)
+               call dbdistancehk(x0, yz(k), xz(k), yz(k), xx)
+               if (xz(k) < x0) then
+                  xx = -xx
+               end if
+               call dbdistancehk(xz(k), y0, xz(k), yz(k), yy)
+               if (yz(k) < y0) then
+                  yy = -yy
+               end if
+
+               cs = xx / rr
+               sn = yy / rr
+
+               s1k = samp * exp(-rr * rr / (2.0_dp * rs * rs))
+               uvr = s1k * uv * rr
+
+               if (tim == 0) then
+                  s1(k) = s1(k) + max(bl(k), s1k)
+                  s0(k) = s1(k)
+                  ucx(k) = ucx(k) + uvr * sn
+                  ucy(k) = ucy(k) - uvr * cs
+               end if
+
+               !dif = abs(s1(k) - s1k)
+               !call statisticsonemorepoint(dif)
+            end do
+
+         end do
+      end do
+
+      if (tim == 0) then
+         call set_kbot_ktop(jazws0=1)
+         do L = 1, Lnx
+            k1 = ln(1, L)
+            k2 = ln(2, L)
+            u1(L) = 0.5_dp * (ucx(k1) + ucx(k2)) * csu(L) + 0.5_dp * (ucy(k1) + ucy(k2)) * snu(L)
+            u0(L) = u1(L)
+            Ltop(L) = Lbot(L) + kmx - 1
+            do LL = Lbot(L), Ltop(L)
+               u1(LL) = u1(L)
+               u0(LL) = u1(L)
+            end do
+         end do
+      end if
+
+      !call statisticsfinalise()
+   end subroutine oceaneddy
+
+end module m_corioliskelvin

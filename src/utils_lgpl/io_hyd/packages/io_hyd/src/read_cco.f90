@@ -1,0 +1,99 @@
+!----- GPL ---------------------------------------------------------------------
+!
+!  Copyright (C)  Stichting Deltares, 2011-2026.
+!
+!  This program is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation version 3.
+!
+!  This program is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+!
+!  contact: delft3d.support@deltares.nl
+!  Stichting Deltares
+!  P.O. Box 177
+!  2600 MH Delft, The Netherlands
+!
+!  All indications and logos of, and references to, "Delft3D" and "Deltares"
+!  are registered trademarks of Stichting Deltares, and remain the property of
+!  Stichting Deltares. All rights reserved.
+!
+!-------------------------------------------------------------------------------
+!
+!
+
+      subroutine read_cco(file_cco, num_columns  , num_rows  , xdepth, ydepth)
+
+      ! function : read a cco file and check dimensions
+
+      use m_logger_helper, only : stop_with_error, get_log_unit_number
+      use m_waq_file                   ! module contains everything for the files
+      implicit none
+
+      ! declaration of the arguments
+
+      type(t_file)                       :: file_cco               ! aggregation-file
+      integer                                :: num_columns                   ! grid cells m direction
+      integer                                :: num_rows                   ! grid cells n direction
+      real                                   :: xdepth(num_rows,num_columns)      ! x coordinate depth points
+      real                                   :: ydepth(num_rows,num_columns)      ! y coordinate depth points
+
+      ! local declarations
+
+      integer                                :: mmaxd                  ! grid cells m direction from cco file
+      integer                                :: nmaxd                  ! grid cells n direction from cco file
+      real                                   :: x0                     ! x coordinate origin
+      real                                   :: y0                     ! y coordinate origin
+      real                                   :: alpha                  ! alpha
+      integer                                :: npart                  ! npart
+      integer                                :: num_layers                  ! num_layers
+      integer                                :: ioerr                  ! error on file
+      integer                                :: i                      ! loop counter
+      integer                                :: m                      ! loop counter
+      integer                                :: n                      ! loop counter
+      real                                   :: rdum                   ! dummy
+      integer                                :: lunrep                 ! unit number report file
+
+      call get_log_unit_number(lunrep)
+
+      call file_cco%open()
+      read(file_cco%unit,iostat=ioerr) mmaxd, nmaxd, x0, y0, alpha, npart, num_layers
+      if ( ioerr .ne. 0 ) then
+         write(lunrep,*) ' error reading cco file header record'
+         call stop_with_error()
+      endif
+
+      if ( nmaxd.ne.num_rows .or. mmaxd.ne.num_columns ) then
+         write(lunrep,*) ' dimensions cco file differ from input hydrodynamics'
+         call stop_with_error()
+      endif
+
+      do i=1 , 2*npart+9
+         read(file_cco%unit,iostat=ioerr) rdum
+         if ( ioerr .ne. 0 ) then
+            write(lunrep,*) ' error reading cco file dummy records'
+            call stop_with_error()
+         endif
+      enddo
+
+      read(file_cco%unit,iostat=ioerr) ((xdepth(n,m),n=1,num_rows),m=1,num_columns)
+      if ( ioerr .ne. 0 ) then
+         write(lunrep,*) ' error reading cco file xdepth'
+         call stop_with_error()
+      endif
+      read(file_cco%unit,iostat=ioerr) ((ydepth(n,m),n=1,num_rows),m=1,num_columns)
+      if ( ioerr .ne. 0 ) then
+         write(lunrep,*) ' error reading cco file ydepth'
+         call stop_with_error()
+      endif
+
+      close(file_cco%unit)
+      file_cco%status = FILE_STAT_UNOPENED
+
+      return
+      end

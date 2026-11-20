@@ -1,0 +1,149 @@
+!----- AGPL --------------------------------------------------------------------
+!
+!  Copyright (C)  Stichting Deltares, 2017-2026.
+!
+!  This file is part of Delft3D (D-Flow Flexible Mesh component).
+!
+!  Delft3D is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU Affero General Public License as
+!  published by the Free Software Foundation version 3.
+!
+!  Delft3D  is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU Affero General Public License for more details.
+!
+!  You should have received a copy of the GNU Affero General Public License
+!  along with Delft3D.  If not, see <http://www.gnu.org/licenses/>.
+!
+!  contact: delft3d.support@deltares.nl
+!  Stichting Deltares
+!  P.O. Box 177
+!  2600 MH Delft, The Netherlands
+!
+!  All indications and logos of, and references to, "Delft3D",
+!  "D-Flow Flexible Mesh" and "Deltares" are registered trademarks of Stichting
+!  Deltares, and remain the property of Stichting Deltares. All rights reserved.
+!
+!-------------------------------------------------------------------------------
+
+!
+!
+
+!> Insert a netline by splitting a string of connected quadrilateral cells
+!! in one direction.
+!!
+!! The direction and start cell is determined by specifying a single 'cross'
+!! link that will be split.
+module m_insert_netline
+   use m_splitlink, only: splitlink
+
+   implicit none
+
+   private
+
+   public :: insert_netline
+
+contains
+
+   recursive subroutine insert_netline(xp, yp, L_)
+      use precision, only: dp
+      use m_teknet
+      use m_netw
+      use gridoperations
+      use m_readyy
+      use m_is_link
+
+      real(kind=dp), intent(in) :: xp, yp !< link coordinates (used only if L_.eq.0)
+      integer, intent(in) :: L_ !< link number (set to 0 first time)
+
+      real(kind=dp) :: zp
+      real(kind=dp), parameter :: dcostol = 0.25_dp
+
+      integer, dimension(2) :: Lnext ! next links in recursion
+      integer :: Nnext ! number of next links
+      integer :: i, ic, ja, kk, kknext, L, N, N2Dcells
+      integer :: ierror
+
+      ierror = 1
+
+!  initialization: find link
+      if (L_ == 0) then
+         if (netstat /= NETSTAT_OK) then
+            call findcells(100)
+         end if
+
+         L = 0
+         call islink(L, xp, yp, zp)
+
+         if (L == 0) then
+            goto 1234
+         end if
+
+         call teknet(ja) ! whipe out previous net
+         call readyy('Inserting meshline', 0.0_dp)
+      else
+         L = L_
+      end if
+
+      Nnext = 0
+      Lnext = 0
+
+      if (kn(3, L) == 2) then
+         N2Dcells = lnn(L)
+      else ! 1D
+         N2Dcells = 0
+      end if
+
+      do i = 1, N2Dcells
+         ic = lne(i, L)
+         N = netcell(ic)%N
+         if (N /= 4) then
+            cycle
+         end if
+         kk = 1
+         do while (netcell(ic)%lin(kk) /= L .and. kk < N)
+            kk = kk + 1
+         end do
+         if (netcell(ic)%lin(kk) /= L) then
+            cycle
+         end if
+         kknext = kk + 2
+         if (kknext > N) then
+            kknext = kknext - N
+         end if
+         Nnext = Nnext + 1
+         Lnext(Nnext) = netcell(ic)%lin(kknext)
+      end do
+
+      call splitlink(0.0_dp, 0.0_dp, L, dcostol, 1, ierror)
+      if (ierror /= 0) then
+         goto 1234
+      end if
+!   ja = 1
+!   call confrm(' ', ja)
+
+      do i = 1, Nnext
+!     proceed with links that are inside the selecting polygon
+!      if ( kc(kn(1,Lnext(i))).gt.0 .and. kc(kn(2,Lnext(i))).gt.0 ) then
+         if (lc(Lnext(i)) > 0 .and. kn(1, Lnext(i)) > 0 .and. kn(2, Lnext(i)) > 0) then ! Lnext(i) may have been disabled/deleted in the recursion
+            call insert_netline(0.0_dp, 0.0_dp, Lnext(i))
+         else
+            continue
+         end if
+      end do
+
+      ierror = 0
+
+!  error handling
+1234  continue
+
+      if (L_ == 0) then
+         call readyy(' ', -1.0_dp)
+         call teknet(ja) ! plot new net
+      end if
+
+      return
+   end subroutine insert_netline
+
+end module m_insert_netline
