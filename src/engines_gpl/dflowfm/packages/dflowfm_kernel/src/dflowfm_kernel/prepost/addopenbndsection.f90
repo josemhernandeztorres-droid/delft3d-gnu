@@ -63,7 +63,8 @@ contains
       end if
 
       nopenbndsect = nopenbndsect + 1
-      maxopenbnd = max(size(nopenbndlin), int(1.2 * nopenbndsect) + 1, 5)
+      maxopenbnd = max(int(1.2 * nopenbndsect) + 1, 5)
+      if (allocated(nopenbndlin)) maxopenbnd = max(size(nopenbndlin), maxopenbnd)
       call realloc(openbndname, maxopenbnd, fill=' ')
       call realloc(openbndfile, maxopenbnd, fill=' ')
       call realloc(openbndtype, maxopenbnd, fill=IBNDTP_UNKNOWN)
