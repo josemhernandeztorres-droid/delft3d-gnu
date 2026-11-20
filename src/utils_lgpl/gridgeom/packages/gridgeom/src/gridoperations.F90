@@ -1023,7 +1023,9 @@ contains
          ! We can safely ignore it here, but won't, because this saves some
          ! realloc costs for xz, yz in flow_geominit.
          numc = max(ndx, nump1d2d)
-         if ((numc > size(xz)) .or. (.not. allocated(xz))) then
+         n = 0
+         if (allocated(xz)) n = size(xz)
+         if ((numc > n) .or. (.not. allocated(xz))) then
             call realloc(xz, numc, stat=ierr, keepExisting=.false.)
             call aerr('xz(numc)', IERR, numc)
             call realloc(yz, numc, stat=ierr, keepExisting=.false.)
