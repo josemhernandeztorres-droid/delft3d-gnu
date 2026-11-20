@@ -1331,6 +1331,7 @@ contains
       integer :: layer
 
       target_array => null()
+      target_array_3d => null()
       indx = 1
       time_dependent_array = .false.
       target_location_type = 0
