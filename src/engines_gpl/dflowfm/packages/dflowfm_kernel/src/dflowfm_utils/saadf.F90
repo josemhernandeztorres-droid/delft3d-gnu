@@ -10857,7 +10857,7 @@ contains
 ! local
 !
       integer i, j, itmp
-      integer, external :: irand
+      intrinsic :: irand
 !----------------------------------------------------------------------
       no_warning_unused_dummy_argument(iseed)
 
