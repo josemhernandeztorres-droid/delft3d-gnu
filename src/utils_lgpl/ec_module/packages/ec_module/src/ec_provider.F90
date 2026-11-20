@@ -1649,6 +1649,7 @@ contains
       end do
       ! close pli file
       close (fileReaderPtr%fileHandle, iostat=istat)
+      fileReaderPtr%fileHandle = ec_undef_int ! closed: never inquire/close this number again (gfortran reuses NEWUNIT numbers)
 
       ! Construct the poly_tim Item.
       quantityId = ecInstanceCreateQuantity(instancePtr)
@@ -1971,6 +1972,7 @@ contains
       !
       ! close pli file
       close (fileReaderPtr%fileHandle, iostat=istat)
+      fileReaderPtr%fileHandle = ec_undef_int ! closed: never inquire/close this number again (gfortran reuses NEWUNIT numbers)
       success = .true.
    end function ecProviderCreatePolyTimItemsBC
 
