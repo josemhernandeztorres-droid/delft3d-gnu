@@ -56,6 +56,7 @@ contains
       use m_dambreak_breach, only: update_counters_for_dambreaks, update_dambreak_administration
       use m_update_counters_for_structures, only: update_counters_for_dambreak_or_pump
       use m_1d_structures, only: update_bedlevels_for_bridges
+      use iso_c_binding, only: c_f_pointer, c_loc
 
       logical :: status
 
