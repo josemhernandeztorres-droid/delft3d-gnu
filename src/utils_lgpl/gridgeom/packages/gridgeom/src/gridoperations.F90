@@ -1031,7 +1031,9 @@ contains
             call realloc(yz, numc, stat=ierr, keepExisting=.false.)
             call aerr('yz(numc)', IERR, numc)
          end if
-         if ((numc > size(xzw)) .or. (.not. allocated(xzw))) then
+         n = 0
+         if (allocated(xzw)) n = size(xzw)
+         if ((numc > n) .or. (.not. allocated(xzw))) then
             call realloc(xzw, numc, stat=ierr, keepExisting=.false.)
             call aerr('xzw(numc)', IERR, numc)
             call realloc(yzw, numc, stat=ierr, keepExisting=.false.)
