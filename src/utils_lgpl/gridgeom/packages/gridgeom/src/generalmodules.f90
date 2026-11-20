@@ -155,7 +155,8 @@ contains
       integer :: maxpolcur
       integer :: ierr
 
-      maxpolcur = size(xpl)
+      maxpolcur = 0
+      if (allocated(xpl)) maxpolcur = size(xpl)
       if (N <= maxpolcur) then
          return
       end if
