@@ -56,7 +56,7 @@ contains
       use m_dambreak_breach, only: update_counters_for_dambreaks, update_dambreak_administration
       use m_update_counters_for_structures, only: update_counters_for_dambreak_or_pump
       use m_1d_structures, only: update_bedlevels_for_bridges
-      use iso_c_binding, only: c_f_pointer, c_loc
+      use iso_c_binding, only: c_f_pointer, c_loc, c_ptr
 
       logical :: status
 
@@ -71,6 +71,7 @@ contains
       integer, dimension(:), allocatable :: lftopol
       integer :: i_status !< status of the function
       real(kind=dp), pointer :: tgtarr(:)
+      type(c_ptr) :: tgtcptr
       integer :: loc_spec_type
 
       ! initialize exit status
@@ -98,7 +99,8 @@ contains
             end if
             ! Time-interpolated value will be placed in structure's appropriate member field, available in
             ! %targetptr, when calling ec_gettimespacevalue.
-            call c_f_pointer(c_loc(pfrc%targetptr), tgtarr, [1])
+            tgtcptr = c_loc(pfrc%targetptr)
+            call c_f_pointer(tgtcptr, tgtarr, [1])
             success = adduniformtimerelation_objects(qid, '', trim(pfrc%object_type), trim(pfrc%object_id), &
                                                      trim(pfrc%param_name), filename, 1, 1, tgtarr)
          end associate
