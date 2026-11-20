@@ -629,6 +629,20 @@ contains
       !
       ! Store the fixed weirs data
       !
+      if (.not. allocated(cache_xpl_fixed)) allocate (cache_xpl_fixed(0))
+      if (.not. allocated(cache_ypl_fixed)) allocate (cache_ypl_fixed(0))
+      if (.not. allocated(cache_dsl_fixed)) allocate (cache_dsl_fixed(0))
+      if (.not. allocated(cache_ilink_fixed)) allocate (cache_ilink_fixed(0))
+      if (.not. allocated(cache_ipol_fixed)) allocate (cache_ipol_fixed(0))
+      if (.not. allocated(cached_bottom_area_dry)) allocate (cached_bottom_area_dry(0))
+      if (.not. allocated(cached_lne_dry)) allocate (cached_lne_dry(2, 0))
+      if (.not. allocated(cached_lnn_dry)) allocate (cached_lnn_dry(0))
+      if (.not. allocated(cached_xz_dry)) allocate (cached_xz_dry(0))
+      if (.not. allocated(cached_yz_dry)) allocate (cached_yz_dry(0))
+      if (.not. allocated(cached_xzw_dry)) allocate (cached_xzw_dry(0))
+      if (.not. allocated(cached_yzw_dry)) allocate (cached_yzw_dry(0))
+      if (.not. allocated(cached_netcell_dry)) allocate (cached_netcell_dry(0))
+      if (.not. allocated(cached_thin_dams)) allocate (cached_thin_dams(0))
       write (lun) section(key_fixed_weirs), size(cache_xpl_fixed), size(cache_ilink_fixed)
 
       if (size(cache_xpl_fixed) > 0) then
