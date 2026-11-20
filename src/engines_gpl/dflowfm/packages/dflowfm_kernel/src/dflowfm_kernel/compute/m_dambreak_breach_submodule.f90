@@ -28,7 +28,6 @@
 !-------------------------------------------------------------------------------
 
 submodule(m_dambreak_breach) m_dambreak_breach_submodule
-   use precision, only: dp
 
    implicit none
 
