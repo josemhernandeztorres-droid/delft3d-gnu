@@ -111,6 +111,10 @@ module fm_external_forcings
    public :: set_external_forcings
    public :: calculate_wind_stresses
    public :: sourcesink_parse_coordinates
+   ! D-2: used only by the submodules; gfortran drops PRIVATE module procedures no host code references
+   public :: ini_alloc_laterals, allocate_patm, addtimespacerelation_boundaries, select_wave_variables_subgroup, &
+             register_quantity_pli_combination, quantity_pli_combination_is_registered, print_error_message, &
+             init_threttimes, init_registered_items, allocate_water_level_correction, allocate_pseudo_air_pressure
 
    procedure(fill_open_boundary_cells_with_inner_values_any), pointer :: fill_open_boundary_cells_with_inner_values !< boundary update routine to be called
 
