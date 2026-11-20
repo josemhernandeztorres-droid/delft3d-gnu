@@ -389,6 +389,7 @@ contains
       use m_laterals, only: ILATTP_1D
       use unstruc_files, only: resolvePath
 
+      integer :: i !< implied-do index
       type(tree_data), pointer, intent(in) :: block_ptr !< Pointer to lateral block in extforce file; child node of the extforce file tree
       character(len=*), intent(in) :: loc_id !< The id of the lateral
       character(len=*), intent(in) :: base_dir !< The base directory of the lateral
@@ -423,7 +424,7 @@ contains
       has_location_file = has_key(block_ptr, 'Lateral', 'locationFile')
 
       ! Test if multiple discharge methods were set
-      number_of_discharge_specifications = sum([(1, integer :: i=1, maximum_number_of_discharge_specifications)], [has_node_id, has_branch_id .or. has_chainage, has_num_coordinates .or. has_x_coordinates .or. has_y_coordinates, has_location_file])
+      number_of_discharge_specifications = sum([(1, i=1, maximum_number_of_discharge_specifications)], [has_node_id, has_branch_id .or. has_chainage, has_num_coordinates .or. has_x_coordinates .or. has_y_coordinates, has_location_file])
 
       if (number_of_discharge_specifications < 1) then
          call mess(LEVEL_ERROR, 'Lateral '''//trim(loc_id)//''': No discharge specifications found. Use nodeId, branchId + chainage, numCoordinates + xCoordinates + yCoordinates, or locationFile.')
