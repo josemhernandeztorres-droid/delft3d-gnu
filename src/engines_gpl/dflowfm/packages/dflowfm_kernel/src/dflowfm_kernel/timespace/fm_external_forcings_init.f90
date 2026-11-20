@@ -28,7 +28,6 @@
 !-------------------------------------------------------------------------------
 !
 submodule(fm_external_forcings) fm_external_forcings_init
-   use precision_basics, only: dp
    implicit none
 
    integer, parameter :: INI_VALUE_LEN = 256
