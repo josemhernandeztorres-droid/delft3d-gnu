@@ -67,6 +67,7 @@ contains
       integer :: make_latlon
 
       ierr = DFM_NOERR
+      nullify (lonn, latn)
 
       make_latlon = 0
 #ifdef HAVE_PROJ
