@@ -9533,7 +9533,7 @@ contains
             call definencvar(imapfile, id_air_pressure(iid), nf90_double, idims, 'Patm', 'Atmospheric Pressure', 'N m-2', 'FlowElem_xcc FlowElem_ycc')
          end if
 
-         if (ja_icecover) then
+         if (btest(ja_icecover, 0)) then
             if (ice_mapout%ice_s1) then
                call definencvar(imapfile, id_ice_s1(iid), nf90_double, idims, 'ice_s1', 'Sea surface height of open water', 'm', 'FlowElem_xcc FlowElem_ycc')
             end if
@@ -11042,7 +11042,7 @@ contains
          ierr = nf90_put_var(imapfile, id_air_pressure(iid), air_pressure, [1, itim], [ndxndxi, 1])
       end if
 
-      if (ja_icecover) then
+      if (btest(ja_icecover, 0)) then
          if (ice_mapout%ice_s1) then
             ierr = nf90_put_var(imapfile, id_ice_s1(iid), ice_s1, [1, itim], [ndxndxi, 1])
          end if
