@@ -3566,7 +3566,7 @@ contains
          end if
       end if
 
-      if (jaspacevarcharn .and. (wind_drag_type /= CD_TYPE_CHARNOCK1955 .and. wind_drag_type /= CD_TYPE_CHARNOCK_PLUS_VISCOUS)) then
+      if (jaspacevarcharn == 1 .and. (wind_drag_type /= CD_TYPE_CHARNOCK1955 .and. wind_drag_type /= CD_TYPE_CHARNOCK_PLUS_VISCOUS)) then
          write (msgbuf, '(a,i0,a)') &
             'Inconsistent configuration: a time- and space-varying Charnock coefficient was ' // &
             'specified in the .ext file, but [wind] ICdtyp is set to ', &
