@@ -494,7 +494,8 @@ subroutine icecover_prepare_output(icecover, water_level, water_density, ag)
    real(fp) :: zmin !< lower ice cover surface height (m+REF)
    real(fp) :: zmax !< upper ice cover surface height (m+REF)
    
-   ndx = size(icecover%ice_area_fraction)
+   ndx = 0
+   if (associated(icecover%ice_area_fraction)) ndx = size(icecover%ice_area_fraction)
    do n = 1, ndx
       open_water_level = water_level(n) + icecover%pressure(n) / water_density(n) / ag
       zmin = open_water_level - icecover%ice_thickness(n) * icecover%ice_density / water_density(n)
