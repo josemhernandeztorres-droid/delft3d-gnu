@@ -89,7 +89,8 @@ contains
       end do
 
       ! Create branch node index array and inverse.
-      nump1d = size(meshgeom1d%nodebranchidx) !< Old number of nodes contained in meshgeom1d
+      nump1d = 0
+      if (associated(meshgeom1d%nodebranchidx)) nump1d = size(meshgeom1d%nodebranchidx) !< Old number of nodes contained in meshgeom1d
       if (.not. associated(meshgeom1d%nodeidx)) then ! assume that the nodes were put at the front in order during network reading.
          allocate (meshgeom1d%nodeidx(nump1d))
          meshgeom1d%nodeidx = [(nump1d_i, nump1d_i=1, nump1d)]
